@@ -322,7 +322,7 @@ _G.ServerPage = Window:Tab({
     Icon = "server"
 })
 
-_G.X5SpeedPage = Window:TabSection({
+_G.X5SpeedPage = Window:Section({
     Title = "X5 Speed Auto Fishing",
     TextSize = 22,
     TextXAlignment = "Center",
