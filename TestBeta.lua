@@ -1,9 +1,14 @@
------ [ Load WIND UI ]
+-------------------------------------------
+----- =======[ Load WindUI ]
+-------------------------------------------
 
 local Version = "1.6.53"
-local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/" ..Version .. "/main.lua"))()
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/" ..
+Version .. "/main.lua"))()
 
------ [ MERGED GLOBAL FUNCTION ]
+-------------------------------------------
+----- =======[ GLOBAL FUNCTION ]
+-------------------------------------------
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
@@ -102,10 +107,15 @@ end)
 task.spawn(AutoReconnect)
 
 local ijump = false
+
 local RodIdle = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Animations"):WaitForChild("ReelingIdle")
+
 local RodShake = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Animations"):WaitForChild("RodThrow")
+
 local character = Players.LocalPlayer.Character or Players.LocalPlayer.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
+
+
 local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
 
 local RodShake = animator:LoadAnimation(RodShake)
@@ -113,10 +123,9 @@ local RodIdle = animator:LoadAnimation(RodIdle)
 
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
-
- ------------
+-----------------------------------------------------
 -- SERVICES
- ------------
+-----------------------------------------------------
 
 local Shared = ReplicatedStorage:WaitForChild("Shared", 5)
 local Modules = ReplicatedStorage:WaitForChild("Modules", 5)
@@ -144,7 +153,10 @@ if Shared then
     if not _G.PromptController then pcall(function() _G.PromptController = require(ReplicatedStorage.Controllers.PromptController) end) end
 end
 
------ [ NOTIFY FUNCTION ]
+
+-------------------------------------------
+----- =======[ NOTIFY FUNCTION ]
+-------------------------------------------
 
 local function NotifySuccess(title, message, duration)
     WindUI:Notify({
@@ -182,8 +194,11 @@ local function NotifyWarning(title, message, duration)
     })
 end
 
------ [ CHECK DATA ]
- 
+
+------------------------------------------
+----- =======[ CHECK DATA ]
+-----------------------------------------
+
 local CheckData = {
     pasteURL = "https://paste.monster/CrTNPO9LIDhY/raw/",
     interval = 30,
@@ -227,7 +242,9 @@ task.spawn(function()
 end)
 
 
------ [ LOAD WINDOW ]
+-------------------------------------------
+----- =======[ LOAD WINDOW ]
+-------------------------------------------
 
 
 WindUI:AddTheme({
@@ -283,18 +300,20 @@ Window:EditOpenButton({
 })
 
 local ConfigManager = Window.ConfigManager
-local myConfig = ConfigManager:CreateConfig("CivasXConfig")
+local myConfig = ConfigManager:CreateConfig("SansXConfig")
 
 WindUI:SetNotificationLower(true)
 
 WindUI:Notify({
-    Title = "Civas",
+    Title = "Quix",
     Content = "All Features Loaded!",
     Duration = 5,
     Image = "square-check-big"
 })
 
------ [ ALL TAB ]
+-------------------------------------------
+----- =======[ ALL TAB ]
+-------------------------------------------
 
 local Home = Window:Tab({
     Title = "Developer Info",
@@ -306,8 +325,8 @@ _G.ServerPage = Window:Tab({
     Icon = "server"
 })
 
-_G.X5SpeedPage = X5Speed:Section({
-    Title = "Bikin pusing",
+local X5SpeedSection = _G.X5SpeedPage:Section({
+    Title = "X5 Speed Auto Fishing",
     TextSize = 22,
     TextXAlignment = "Center",
     Opened = false
@@ -369,8 +388,9 @@ local SettingsTab = AllMenu:Tab({
     Icon = "cog"
 })
 
-
------ [ HOME TAB ]
+-------------------------------------------
+----- =======[ HOME TAB ]
+-------------------------------------------
 
 Home:Section({
 	Title = "Developer Information",
@@ -391,7 +411,97 @@ Tiktok : @Chadichaa
 
 Home:Space()
 
------ [ SERVER PAGE TAB ]
+local InviteAPI = "https://discord.com/api/v10/invites/"
+
+-- Fungsi buat ambil data server Discord
+local function LookupDiscordInvite(inviteCode)
+    local url = InviteAPI .. inviteCode .. "?with_counts=true"
+    local success, response = pcall(function()
+        return game:HttpGet(url)
+    end)
+
+    if success then
+        local data = HttpService:JSONDecode(response)
+        return {
+            name = data.guild and data.guild.name or "Unknown",
+            id = data.guild and data.guild.id or "Unknown",
+            online = data.approximate_presence_count or 0,
+            members = data.approximate_member_count or 0,
+            icon = data.guild and data.guild.icon
+                and "https://cdn.discordapp.com/icons/"..data.guild.id.."/"..data.guild.icon..".png"
+                or "",
+        }
+    else
+        warn("Gagal mendapatkan data invite.")
+        return nil
+    end
+end
+
+-- Kode invite Discord
+local inviteCode = "sansmoba"
+local inviteData = LookupDiscordInvite(inviteCode)
+
+-- Tampilin info Discord di GUI
+if inviteData then
+    Home:Paragraph({
+        Title = string.format("[DISCORD] %s", inviteData.name),
+        Desc = string.format("Members: %d\nOnline: %d", inviteData.members, inviteData.online),
+        Image = inviteData.icon,
+        ImageSize = 50,
+        Locked = true,
+    })
+
+    -- Tombol Join Discord
+    Home:Button({
+        Title = "Join Discord",
+        Desc = "Klik untuk salin link invite",
+        Callback = function()
+            local discordLink = "https://discord.gg/" .. inviteCode
+
+            -- Kalau executor support syn.request, langsung buka link
+            if syn and syn.request then
+                syn.request({
+                    Url = discordLink,
+                    Method = "GET"
+                })
+            else
+                -- Kalau gak support, copy ke clipboard aja
+                setclipboard(discordLink)
+                game.StarterGui:SetCore("SendNotification", {
+                    Title = "Link Discord Disalin!",
+                    Text = "Tempel di browser buat join server.",
+                    Duration = 5
+                })
+            end
+        end
+    })
+else
+    warn("Invite tidak valid.")
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Invite Discord Invalid",
+        Text = "Cek ulang kode invite lu!",
+        Duration = 5
+    })
+end
+
+if getgenv().AutoRejoinConnection then
+    getgenv().AutoRejoinConnection:Disconnect()
+    getgenv().AutoRejoinConnection = nil
+end
+
+getgenv().AutoRejoinConnection = game:GetService("CoreGui").RobloxPromptGui.promptOverlay.ChildAdded:Connect(function(child)
+    task.wait()
+    if child.Name == "ErrorPrompt" and child:FindFirstChild("MessageArea") and child.MessageArea:FindFirstChild("ErrorFrame") then
+        local TeleportService = game:GetService("TeleportService")
+        local Player = game.Players.LocalPlayer
+        task.wait(2) 
+        TeleportService:Teleport(game.PlaceId, Player)
+    end
+end)
+
+-------------------------------------------
+----- =======[ SERVER PAGE TAB ]
+-------------------------------------------
 
 _G.ServerList = game:GetService("HttpService"):JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" ..
 game.PlaceId .. "/servers/Private?sortOrder=Asc&limit=100"))
@@ -446,9 +556,9 @@ _G.ShowServersButton = _G.ServerListAll:Button({
     end
 })
 
- --
------ [ AUTO FISH TAB ]
- --
+-------------------------------------------
+----- =======[ AUTO FISH TAB ]
+-------------------------------------------
 
 _G.REFishingStopped = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RE/FishingStopped"]
 _G.RFCancelFishingInputs = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/CancelFishingInputs"]
@@ -980,6 +1090,13 @@ local function x5StartOrStopAutoFish(shouldStart)
     end
 end
 
+-- UI Controls
+X5SpeedSection:Paragraph({
+    Title = "Information",
+    Desc = "Bikin pusing haha.",
+    Color = "Blue"
+})
+
 X5SpeedSection:Space()
 
 local x5DelaySlider = X5SpeedSection:Slider({
@@ -1076,9 +1193,9 @@ local x5AnimToggle = X5SpeedSection:Toggle({
 
 myConfig:Register("X5_NoAnimation", x5AnimToggle)
 
--- ============================================================
+-- ===================================================================
 -- BAGIAN 2: AUTO CLICK MINIGAME
--- ============================================================
+-- ===================================================================
 
 _G.originalRodStarted = _G.FishingController.FishingRodStarted
 _G.originalFishingStopped = _G.FishingController.FishingStopped
@@ -1334,9 +1451,9 @@ _G.FishSec:Button({
 _G.FishSec:Space()
 
 
--- ================================================
+-- =======================================================
 -- == AUTO CUTSCENE REMOVER (TOGGLE + HOOK)
--- ================================================
+-- =======================================================
 
 _G.CutsceneController = require(ReplicatedStorage.Controllers.CutsceneController)
 _G.GuiControl = require(ReplicatedStorage.Modules.GuiControl)
@@ -1475,9 +1592,9 @@ _G.FishAdvenc:Button({
 
 _G.FishSec:Space()
 
--- ================================================
+-- =======================================================
 -- == FAKE FISHING LOOP (GLOBAL VARIABLES VERSION)
--- ================================================
+-- =======================================================
 
 _G.ReplicatedStorage = game:GetService("ReplicatedStorage")
 _G.Players = game:GetService("Players")
@@ -1591,9 +1708,9 @@ _G.GetRandomWeight = function(fishData)
     return rnd:NextNumber(fishData.WeightMin, fishData.WeightMax)
 end
 
--- ================================================
+-- =======================================================
 -- == UI SETUP (GLOBAL)
--- ================================================
+-- =======================================================
 
 _G.FakeFishSec = AutoFish:Section({
     Title = "X99 Speed(Visual)",
@@ -1642,9 +1759,9 @@ _G.FakeFishSec:Toggle({
     end
 })
 
--- ================================================
+-- =======================================================
 -- == LOOP FUNCTION (GLOBAL)
--- ================================================
+-- =======================================================
 
 _G.StartFakeFishingLoop = function()
     while _G.FakeFishingState.Enabled do
@@ -1733,9 +1850,9 @@ _G.StartFakeFishingLoop = function()
     end
 end
 
--- ================================================
+-- =======================================================
 -- AUTO ENCHANT (GLOBAL VARIABLE VERSION)
--- ================================================
+-- =======================================================
 
 _G.EnchantSec = AutoFish:Section({
     Title = "Auto Enchant",
@@ -2081,7 +2198,9 @@ do
 end
 
 
------ [ AUTO FAV TAB ]
+-------------------------------------------
+----- =======[ AUTO FAV TAB ]
+-------------------------------------------
 
 
 local GlobalFav = {
@@ -2260,7 +2379,9 @@ GlobalFav.REObtainedNewFishNotification.OnClientEvent:Connect(function(itemId, _
 end)
 
 
------ [ AUTO FARM TAB ]
+-------------------------------------------
+----- =======[ AUTO FARM TAB ]
+-------------------------------------------
 
 
 local floatPlatform = nil
@@ -2789,9 +2910,9 @@ _G.CavernSec = AutoFarmTab:Section({
     Opened = false
 })
 
--- ================================================
+-- =======================================================
 -- == AUTO EVENT MANAGER (LOCHNESS & DISCO MUSIC)
--- ================================================
+-- =======================================================
 
 -- [GLOBAL VARIABLES]
 _G.AutoLochNess = false
@@ -2813,9 +2934,9 @@ local LOCHNESS_CFRAME = CFrame.new(
     0.999767482, 5.5350835e-08, 0.0215646587
 )
 
--- ================================================
+-- =======================================================
 -- 1. UI: SHARED PARAGRAPH & TOGGLES
--- ================================================
+-- =======================================================
 
 _G.EventParagraph = _G.FarmSec:Paragraph({
     Title = "Event Status Monitor",
@@ -2870,9 +2991,9 @@ _G.FarmSec:Toggle({
     end
 })
 
--- ================================================
+-- =======================================================
 -- 2. LOGIKA LOCHNESS (Original Code Adapted)
--- ================================================
+-- =======================================================
 
 -- Wrapper function agar kompatibel dengan kode lama
 function _G.updateStatus(text, currentCountdown)
@@ -2947,9 +3068,9 @@ _G.DiscoCF2 = CFrame.new(
     0.13251923, -4.25416253e-08, -0.99118042
 )
 
--- ================================================
+-- =======================================================
 -- LOGIKA UTAMA DISCO (PERBAIKAN)
--- ================================================
+-- =======================================================
 
 function _G.GetDiscoSound()
     local classic = Workspace:FindFirstChild("ClassicEvent")
@@ -3115,7 +3236,9 @@ _G.FarmSec:Dropdown({
 })
 
 
------ [ ARTIFACT TAB ]
+-------------------------------------------
+----- =======[ ARTIFACT TAB ]
+-------------------------------------------
 
 local REPlaceLeverItem = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RE/PlaceLeverItem"]
 
@@ -3336,9 +3459,9 @@ _G.ArtSec:Button({
     end
 })
 
- --
------ [ ANCIENT RUIN FARMING ]
- --
+-------------------------------------------
+----- =======[ ANCIENT RUIN FARMING ]
+-------------------------------------------
 
 
 _G.REPlaceItems = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RE/PlacePressureItem"]
@@ -3530,7 +3653,9 @@ _G.RuinSec:Button({
 })
 
 
------ [ IRON CAVERN FARMING (SMART) ]
+-------------------------------------------
+----- =======[ IRON CAVERN FARMING (SMART) ]
+-------------------------------------------
 
 -- 1. Remote Unlock
 _G.REPlaceItems2 = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RE/PlaceCavernTotemItem"]
@@ -3687,7 +3812,7 @@ _G.StopCavernFarm = function()
     end
 end
 
--- ========== UI ELEMENTS ==========
+-- ================= UI ELEMENTS =================
 
 _G.CavernParagraph = _G.CavernSec:Paragraph({
     Title = "Auto The Iron Cafe",
@@ -3720,11 +3845,11 @@ _G.CavernSec:Button({
 
 
 
--- ============================================================
+-- ===================================================================
 -- 
 -- AUTO QUEST ( GHOSFINN & ELEMENT ROD)
 --
--- ============================================================
+-- ===================================================================
 
 
 _G.ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -3794,9 +3919,9 @@ function _G.GetUpdatedQuestProgress(questCategoryName)
     local staticInfo = _G.QuestList[questCategoryName]
     local replionPath = staticInfo.ReplionPath -- e.g., "DeepSea"
     
-    -- ============================================================
+    -- ===================================================================
     -- == [PERBAIKAN REALTIME] MENGECEK FLAG "COMPLETED" TERLEBIH DAHULU ==
-    -- ============================================================
+    -- ===================================================================
     
     -- 2. Tentukan path data di Replion berdasarkan file Anda
     
@@ -3908,9 +4033,9 @@ function _G.UpdateProgressParagraphs()
     end
 end
 
--- ============================================================
+-- ===================================================================
 -- 6. LOGIKA AUTO QUEST (The "Brain")
--- ============================================================
+-- ===================================================================
 
 function _G.StopAutoQuest()
     if _G.AutoQuestState.IsRunning then
@@ -4003,9 +4128,9 @@ function _G.CheckAndRunAutoQuest()
     end
 end
 
--- ============================================================
+-- ===================================================================
 -- 7. UI TOGGLES & FUNGSI INISIALISASI (FIXED LISTENERS)
--- ============================================================
+-- ===================================================================
 
 _G.AutoQuestTab:Toggle({
     Title = "Auto Quest - Ghosfinn Rod",
@@ -4061,11 +4186,11 @@ task.spawn(function()
 
     _G.UpdateProgressParagraphs() -- Panggil sekali saat start
 
-    -- ============================================================
+    -- ===================================================================
     -- == [PERBAIKAN REALTIME]
     -- == Kita sekarang mendengarkan SEMUA path data yang 
     -- == digunakan oleh _G.GetUpdatedQuestProgress
-    -- ============================================================
+    -- ===================================================================
 
     -- 1. Tentukan SEMUA path yang perlu dipantau
     local ejAvailablePath = _G.QuestList.ElementJungle.ReplionPath .. ".Available.Forever.Quests"
@@ -4163,7 +4288,9 @@ end)
 
 
 
------ [ MASS TRADE TAB ]
+-------------------------------------------
+----- =======[ MASS TRADE TAB ]
+-------------------------------------------
 
 -- [Trade State Baru]
 local tradeState = { 
@@ -4206,9 +4333,9 @@ local function refreshDropdownV2()
     end
 end
 
--- ================================================
+-- =======================================================
 -- LOGIKA PEMBARUAN INVENTARIS 
--- ================================================
+-- =======================================================
 
 local function refreshInventory()
     local DataReplion = _G.Replion.Client:WaitReplion("Data")
@@ -4251,9 +4378,9 @@ local function refreshInventory()
     if _G.PlayerDropdownTrade then _G.PlayerDropdownTrade:Refresh(getPlayerListV2()) end
 end
 
--- ================================================
+-- =======================================================
 -- LOGIKA HOOKING
--- ================================================
+-- =======================================================
 
 local mt = getrawmetatable(game)
 local oldNamecall = mt.__namecall
@@ -4339,9 +4466,9 @@ pcall(function()
 end)
 
 
--- ================================================
+-- =======================================================
 -- DEFINISI UI
--- ================================================
+-- =======================================================
 
 Trade:Section({Title = "Trade Mode Selection"})
 
@@ -4635,7 +4762,10 @@ for _, element in ipairs(_G.TradeQuietElements) do
     if element.Element then element.Element.Visible = true end
 end
 
------ [ V3 - MASS TRADE BY CATEGORY ]
+-------------------------------------------
+----- ======= V3 - MASS TRADE BY CATEGORY
+-------------------------------------------
+
 
 if Trade and GlobalFav and GlobalFav.Variants and NotifyWarning and _G.Replion and _G.ItemUtility and _G.ItemStringUtility and InitiateTrade then
     
@@ -4702,9 +4832,9 @@ if Trade and GlobalFav and GlobalFav.Variants and NotifyWarning and _G.Replion a
     })
     table.insert(_G.TradeV3Elements, {Element = V3_FilterToggle}) -- Daftarkan UI
     
-    -- ============================
+    -- ===================================
     -- == [BARU] INPUT AMOUNT UNTUK V3
-    -- ============================
+    -- ===================================
     local V3_AmountInput = Trade:Input({
         Title = "Amount to Trade",
         Placeholder = "Enter amount...",
@@ -4737,14 +4867,14 @@ if Trade and GlobalFav and GlobalFav.Variants and NotifyWarning and _G.Replion a
                     pcall(V3_StartToggle.SetValue, V3_StartToggle, false); return
                 end
                 
-                -- ============================
+                -- ===================================
                 -- == [BARU] VALIDASI AMOUNT V3
-                -- ============================
+                -- ===================================
                 if categoryTradeState.tradeAmount <= 0 then
                     V3_StatusParagraph:SetDesc("Error: Please enter a valid amount in the 'Amount to Trade (V3)' input.")
                     pcall(V3_StartToggle.SetValue, V3_StartToggle, false); return
                 end
-                -- ============================
+                -- ===================================
 
                 local DataReplion = _G.Replion.Client:WaitReplion("Data")
                 if not DataReplion then
@@ -4796,9 +4926,9 @@ if Trade and GlobalFav and GlobalFav.Variants and NotifyWarning and _G.Replion a
                     pcall(V3_StartToggle.SetValue, V3_StartToggle, false); return
                 end
 
-                -- ============================
+                -- ===================================
                 -- == [DIUBAH] LOGIKA PENGIRIMAN ITEM DENGAN AMOUNT
-                -- ============================
+                -- ===================================
                 
                 -- 4. Kirim item
                 local totalFound = #uuidsToSend
@@ -4829,7 +4959,7 @@ if Trade and GlobalFav and GlobalFav.Variants and NotifyWarning and _G.Replion a
                     "Process Complete.\nTotal Attempted: %d of %d found.\nSuccessful: %d | Failed: %d", 
                     amountToSend, totalFound, successCount, failCount
                 )
-                -- ============================
+                -- ===================================
 
                 V3_StatusParagraph:SetDesc(finalSummary)
                 NotifySuccess("Mass Category Trade", finalSummary, 7)
@@ -4847,7 +4977,9 @@ else
     end)
 end
 
------ [ DOUBLE ENCHANT STONES ]
+-------------------------------------------
+----- =======[ DOUBLE ENCHANT STONES ]
+-------------------------------------------
 
 _G.DStones:Paragraph({
     Title = "Guide",
@@ -4922,7 +5054,10 @@ _G.DStones:Button({
     end
 })
 
------ [ PLAYER TAB ]
+
+-------------------------------------------
+----- =======[ PLAYER TAB ]
+-------------------------------------------
 
 local currentDropdown = nil
 
@@ -5185,7 +5320,10 @@ local Jp = Player:Slider({
 
 myConfig:Register("JumpPower", Jp)
 
------ [ UTILITY TAB ]
+-------------------------------------------
+----- =======[ UTILITY TAB ]
+-------------------------------------------
+
 
 _G.RFRedeemCode = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/RedeemCode"]
 
@@ -5313,9 +5451,9 @@ function _G.StartAutoTotem()
     _G.AutoTotemState.LoopThread = task.spawn(function()
         while _G.AutoTotemState.IsRunning do
 
-            -- =====================
+            -- ============================
             -- 1. Validasi pilihan totem
-            -- =====================
+            -- ============================
             local rawName = _G.AutoTotemState.SelectedTotemName
             if not rawName or rawName == "" then
                 NotifyError("Auto Totem", "No totem selected from dropdown.")
@@ -5326,9 +5464,9 @@ function _G.StartAutoTotem()
             local cleanName = rawName:match("^(.-) %(")
             cleanName = cleanName or rawName -- fallback seluruh name
 
-            -- =====================
+            -- ============================
             -- 2. Ambil data totem
-            -- =====================
+            -- ============================
             local totemList = _G.TotemInventoryCache[cleanName]
 
             if not totemList or #totemList == 0 then
@@ -5337,9 +5475,9 @@ function _G.StartAutoTotem()
                 return _G.StopAutoTotem()
             end
 
-            -- =====================
+            -- ============================
             -- 3. Ambil UUID & FireServer
-            -- =====================
+            -- ============================
             local uuid = table.remove(totemList, 1)
             if uuid then
                 _G.RESpawnTotem:FireServer(uuid)
@@ -5354,9 +5492,9 @@ function _G.StartAutoTotem()
             end
 
 
-            -- =====================
+            -- ============================
             -- 5. Delay (with countdown)
-            -- =====================
+            -- ============================
             local delaySeconds = _G.AutoTotemState.DelayMinutes * 60
             local waited = 0
             
@@ -5378,9 +5516,9 @@ function _G.StartAutoTotem()
     end)
 end
 
--- ================================================
+-- =======================================================
 -- 3. UI (DROPDOWN, INPUT, TOGGLE)
--- ================================================
+-- =======================================================
 
 _G.TotemStatusParagraph = Utils:Paragraph({
     Title = "Auto Totem Status",
@@ -5785,7 +5923,11 @@ Utils:Dropdown({
     end
 })
 
------ [ SETTINGS TAB ]
+
+-------------------------------------------
+----- =======[ SETTINGS TAB ]
+-------------------------------------------
+
 
 _G.AccConfig = SettingsTab:Section({
     Title = "Account Configuration",
