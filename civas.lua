@@ -1,5 +1,3 @@
------ [ Load WindUI ]
-
 local Version = "1.6.53"
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/" ..Version .. "/main.lua"))()
 
@@ -322,9 +320,11 @@ _G.ServerPage = Window:Tab({
     Icon = "server"
 })
 
-_G.X5SpeedPage = Window:Tab({
+local X5SpeedSection = _G.X5SpeedPage:Section({
     Title = "X5 Speed Auto Fishing",
-    Icon = "fish"
+    TextSize = 22,
+    TextXAlignment = "Center",
+    Opened = false,
 })
 
 local AutoFish = Window:Tab({
@@ -387,7 +387,7 @@ Home:Section({
 
 Home:Paragraph({
 	Title = "QuixFamily",
-	Color = "Grey",
+	Color = "Blue",
 	Desc = [[
 Developer : Civas
 Game Script : Fish it 
