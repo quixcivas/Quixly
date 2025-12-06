@@ -1082,13 +1082,6 @@ local function x5StartOrStopAutoFish(shouldStart)
     end
 end
 
--- UI Controls
-X5SpeedSection:Paragraph({
-    Title = "Information",
-    Desc = "Bikin pusing haha.",
-    Color = "Blue"
-})
-
 X5SpeedSection:Space()
 
 local x5DelaySlider = X5SpeedSection:Slider({
