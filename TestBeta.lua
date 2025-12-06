@@ -992,18 +992,6 @@ local function x5StartOrStopAutoFish(shouldStart)
     end
 end
 
--- UI Controls
-_G.X5Speed:Paragraph({
-    Title = "Bikin pusing",
-    Color = "Blue",
-    Desc = [[ Settings according to signal and skin
-Each device is different, we cannot guarantee it.
-Good Luck!
-]]
-})
-
-X5SpeedSection:Space()
-
 local x5DelaySlider = X5SpeedSection:Slider({
     Title = "Delay Recast",
     Desc = "Delay before recasting (Default: 1.20)",
