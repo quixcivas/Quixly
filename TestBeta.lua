@@ -330,7 +330,7 @@ local AutoFish = Window:Tab({
     Icon = "fish"
 })
 
-_G.X5SpeedPage = Window:Tab({
+local X5SpeedPage = Window:Tab({
     Title = "X5 Speed Auto Fishing",
     Icon = "fish"
 })
