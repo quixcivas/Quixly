@@ -325,13 +325,13 @@ _G.ServerPage = Window:Tab({
     Icon = "server"
 })
 
-_G.X5SpeedPage = Window:Tab({
-    Title = "X5 Speed Auto Fishing",
+local AutoFish = Window:Tab({
+    Title = "Menu Fishing",
     Icon = "fish"
 })
 
-local AutoFish = Window:Tab({
-    Title = "Menu Fishing",
+_G.X5SpeedPage = Window:Tab({
+    Title = "X5 Speed Auto Fishing",
     Icon = "fish"
 })
 
@@ -400,96 +400,6 @@ Version : Premium
 Tiktok : @Chadichaa
 ]]
 })
-
-Home:Space()
-
-local InviteAPI = "https://discord.com/api/v10/invites/"
-
--- Fungsi buat ambil data server Discord
-local function LookupDiscordInvite(inviteCode)
-    local url = InviteAPI .. inviteCode .. "?with_counts=true"
-    local success, response = pcall(function()
-        return game:HttpGet(url)
-    end)
-
-    if success then
-        local data = HttpService:JSONDecode(response)
-        return {
-            name = data.guild and data.guild.name or "Unknown",
-            id = data.guild and data.guild.id or "Unknown",
-            online = data.approximate_presence_count or 0,
-            members = data.approximate_member_count or 0,
-            icon = data.guild and data.guild.icon
-                and "https://cdn.discordapp.com/icons/"..data.guild.id.."/"..data.guild.icon..".png"
-                or "",
-        }
-    else
-        warn("Gagal mendapatkan data invite.")
-        return nil
-    end
-end
-
--- Kode invite Discord
-local inviteCode = "quixfam"
-local inviteData = LookupDiscordInvite(inviteCode)
-
--- Tampilin info Discord di GUI
-if inviteData then
-    Home:Paragraph({
-        Title = string.format("[DISCORD] %s", inviteData.name),
-        Desc = string.format("Members: %d\nOnline: %d", inviteData.members, inviteData.online),
-        Image = inviteData.icon,
-        ImageSize = 50,
-        Locked = true,
-    })
-
-    -- Tombol Join Discord
-    Home:Button({
-        Title = "Join Discord",
-        Desc = "Klik untuk salin link invite",
-        Callback = function()
-            local discordLink = "https://discord.gg/" .. inviteCode
-
-            -- Kalau executor support syn.request, langsung buka link
-            if syn and syn.request then
-                syn.request({
-                    Url = discordLink,
-                    Method = "GET"
-                })
-            else
-                -- Kalau gak support, copy ke clipboard aja
-                setclipboard(discordLink)
-                game.StarterGui:SetCore("SendNotification", {
-                    Title = "Link Discord Disalin!",
-                    Text = "Tempel di browser buat join server.",
-                    Duration = 5
-                })
-            end
-        end
-    })
-else
-    warn("Invite tidak valid.")
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "Invite Discord Invalid",
-        Text = "Cek ulang kode invite lu!",
-        Duration = 5
-    })
-end
-
-if getgenv().AutoRejoinConnection then
-    getgenv().AutoRejoinConnection:Disconnect()
-    getgenv().AutoRejoinConnection = nil
-end
-
-getgenv().AutoRejoinConnection = game:GetService("CoreGui").RobloxPromptGui.promptOverlay.ChildAdded:Connect(function(child)
-    task.wait()
-    if child.Name == "ErrorPrompt" and child:FindFirstChild("MessageArea") and child.MessageArea:FindFirstChild("ErrorFrame") then
-        local TeleportService = game:GetService("TeleportService")
-        local Player = game.Players.LocalPlayer
-        task.wait(2) 
-        TeleportService:Teleport(game.PlaceId, Player)
-    end
-end)
 
 -------------------------------------------
 ----- =======[ SERVER PAGE TAB ]
@@ -1082,57 +992,258 @@ local function x5StartOrStopAutoFish(shouldStart)
     end
 end
 
-X5SpeedSection:Space()
+-------------------------------------------
+----- =======[ X5 SPEED TAB ]
+-------------------------------------------
 
-local x5DelaySlider = X5SpeedSection:Slider({
-    Title = "Delay Recast",
-    Desc = "Delay before recasting (Default: 1.20)",
-    Value = { Min = 0.00, Max = 5.0, Default = x5State.Instant_StartDelay },
-    Precise = 2,
-    Step = 0.01,
-    Callback = function(v)
-        x5State.Instant_StartDelay = tonumber(v)
+X5SpeedTab:Section({
+    Title = "Ultra Speed Config",
+    TextSize = 22,
+    TextXAlignment = "Center",
+    Opened = true
+})
+
+-- Charge Delay
+local chargeDelayInput = X5SpeedTab:Input({
+    Title = "Charge Delay",
+    Desc = "Delay after charging rod (Default: 0.02)",
+    Value = tostring(featureState.Instant_ChargeDelay),
+    Placeholder = "Input number...",
+    Callback = function(input)
+        local value = tonumber(input)
+        if not value then
+            if WindUI then
+                WindUI:Notify({
+                    Title = "Invalid Input",
+                    Content = "Charge Delay must be a number!",
+                    Duration = 3,
+                    Icon = "x-circle"
+                })
+            end
+            return
+        end
+        featureState.Instant_ChargeDelay = value
     end
 })
 
-myConfig:Register("X5_StartDelay", x5DelaySlider)
-
-local x5ResetSlider = X5SpeedSection:Slider({
-    Title = "Spam Finish",
-    Desc = "Number of finish attempts (Default: 10)",
-    Value = { Min = 5, Max = 50, Default = x5State.Instant_ResetCount },
-    Precise = 0,
-    Step = 1,
-    Callback = function(v)
-        x5State.Instant_ResetCount = math.floor(tonumber(v) or 10)
+-- Spam Count
+local spamCountInput = X5SpeedTab:Input({
+    Title = "Spam Count",
+    Desc = "Number of spam attempts (Default: 5)",
+    Value = tostring(featureState.Instant_SpamCount),
+    Placeholder = "Input number...",
+    Callback = function(input)
+        local value = tonumber(input)
+        if not value or value < 1 then
+            if WindUI then
+                WindUI:Notify({
+                    Title = "Invalid Input",
+                    Content = "Spam Count must be a positive number!",
+                    Duration = 3,
+                    Icon = "x-circle"
+                })
+            end
+            return
+        end
+        featureState.Instant_SpamCount = math.floor(value)
     end
 })
 
-myConfig:Register("X5_ResetCount", x5ResetSlider)
-
-local x5CooldownSlider = X5SpeedSection:Slider({
-    Title = "Cooldown Recast",
-    Desc = "Cooldown between cycles (Default: 0.01)",
-    Value = { Min = 0.01, Max = 5, Default = x5State.Instant_ResetPause },
-    Precise = 2,
-    Step = 0.01,
-    Callback = function(v)
-        x5State.Instant_ResetPause = tonumber(v) or 0.01
+-- Worker Count
+local workerCountInput = X5SpeedTab:Input({
+    Title = "Worker Count",
+    Desc = "Number of workers (Default: 4)",
+    Value = tostring(featureState.Instant_WorkerCount),
+    Placeholder = "Input number...",
+    Callback = function(input)
+        local value = tonumber(input)
+        if not value or value < 1 then
+            if WindUI then
+                WindUI:Notify({
+                    Title = "Invalid Input",
+                    Content = "Worker Count must be a positive number!",
+                    Duration = 3,
+                    Icon = "x-circle"
+                })
+            end
+            return
+        end
+        featureState.Instant_WorkerCount = math.floor(value)
     end
 })
 
-myConfig:Register("X5_ResetPause", x5CooldownSlider)
+-- Start Delay
+local startDelayInput = X5SpeedTab:Input({
+    Title = "Start Delay",
+    Desc = "Delay before starting (Default: 1.20)",
+    Value = tostring(featureState.Instant_StartDelay),
+    Placeholder = "Input number...",
+    Callback = function(input)
+        local value = tonumber(input)
+        if not value then
+            if WindUI then
+                WindUI:Notify({
+                    Title = "Invalid Input",
+                    Content = "Start Delay must be a number!",
+                    Duration = 3,
+                    Icon = "x-circle"
+                })
+            end
+            return
+        end
+        featureState.Instant_StartDelay = value
+    end
+})
 
-X5SpeedSection:Space()
+-- Catch Timeout
+local catchTimeoutInput = X5SpeedTab:Input({
+    Title = "Catch Timeout",
+    Desc = "Timeout for catching fish (Default: 0.01)",
+    Value = tostring(featureState.Instant_CatchTimeout),
+    Placeholder = "Input number...",
+    Callback = function(input)
+        local value = tonumber(input)
+        if not value then
+            if WindUI then
+                WindUI:Notify({
+                    Title = "Invalid Input",
+                    Content = "Catch Timeout must be a number!",
+                    Duration = 3,
+                    Icon = "x-circle"
+                })
+            end
+            return
+        end
+        featureState.Instant_CatchTimeout = value
+    end
+})
 
-local x5AutoFishToggle = X5SpeedSection:Toggle({
-    Title = "Start X5 Auto Fish",
-    Desc = "Enable experimental X5 speed fishing",
+-- Cycle Delay
+local cycleDelayInput = X5SpeedTab:Input({
+    Title = "Cycle Delay",
+    Desc = "Delay between cycles (Default: 0.01)",
+    Value = tostring(featureState.Instant_CycleDelay),
+    Placeholder = "Input number...",
+    Callback = function(input)
+        local value = tonumber(input)
+        if not value then
+            if WindUI then
+                WindUI:Notify({
+                    Title = "Invalid Input",
+                    Content = "Cycle Delay must be a number!",
+                    Duration = 3,
+                    Icon = "x-circle"
+                })
+            end
+            return
+        end
+        featureState.Instant_CycleDelay = value
+    end
+})
+
+-- Reset Count
+local resetCountInput = X5SpeedTab:Input({
+    Title = "Reset Count",
+    Desc = "Number of attempts before reset (Default: 10)",
+    Value = tostring(featureState.Instant_ResetCount),
+    Placeholder = "Input number...",
+    Callback = function(input)
+        local value = tonumber(input)
+        if not value or value < 1 then
+            if WindUI then
+                WindUI:Notify({
+                    Title = "Invalid Input",
+                    Content = "Reset Count must be a positive number!",
+                    Duration = 3,
+                    Icon = "x-circle"
+                })
+            end
+            return
+        end
+        featureState.Instant_ResetCount = math.floor(value)
+    end
+})
+
+-- Reset Pause
+local resetPauseInput = X5SpeedTab:Input({
+    Title = "Reset Pause",
+    Desc = "Pause duration after reset (Default: 0.01)",
+    Value = tostring(featureState.Instant_ResetPause),
+    Placeholder = "Input number...",
+    Callback = function(input)
+        local value = tonumber(input)
+        if not value then
+            if WindUI then
+                WindUI:Notify({
+                    Title = "Invalid Input",
+                    Content = "Reset Pause must be a number!",
+                    Duration = 3,
+                    Icon = "x-circle"
+                })
+            end
+            return
+        end
+        featureState.Instant_ResetPause = value
+    end
+})
+
+X5SpeedTab:Section({
+    Title = "Save Load Config",
+    TextSize = 22,
+    TextXAlignment = "Center",
+    Opened = true
+})
+
+-- Save Configuration Button
+X5SpeedTab:Button({
+    Title = "Save Configuration",
+    Desc = "Save all current settings to file",
+    Callback = function()
+        saveConfiguration()
+    end
+})
+
+-- Load Configuration Button
+X5SpeedTab:Button({
+    Title = "Load Configuration",
+    Desc = "Load settings from saved file",
+    Callback = function()
+        if loadConfiguration() then
+            -- Update semua input fields dengan nilai yang diload
+            chargeDelayInput:Set(tostring(featureState.Instant_ChargeDelay))
+            spamCountInput:Set(tostring(featureState.Instant_SpamCount))
+            workerCountInput:Set(tostring(featureState.Instant_WorkerCount))
+            startDelayInput:Set(tostring(featureState.Instant_StartDelay))
+            catchTimeoutInput:Set(tostring(featureState.Instant_CatchTimeout))
+            cycleDelayInput:Set(tostring(featureState.Instant_CycleDelay))
+            resetCountInput:Set(tostring(featureState.Instant_ResetCount))
+            resetPauseInput:Set(tostring(featureState.Instant_ResetPause))
+        else
+            if WindUI then
+                WindUI:Notify({
+                    Title = "Load Failed",
+                    Content = "No saved configuration found!",
+                    Duration = 3,
+                    Icon = "x-circle"
+                })
+            end
+        end
+    end
+})
+
+X5SpeedTab:Section({
+    Title = "Activity Feature",
+    TextSize = 22,
+    TextXAlignment = "Center",
+    Opened = true
+})
+
+local autoFishToggle = X5SpeedTab:Toggle({
+    Title = "AutoFish Ultra Speed",
+    Desc = "Still unstable and lots of bugs.",
     Value = false,
-    Callback = x5StartOrStopAutoFish
+    Callback = startOrStopAutoFish
 })
-
-myConfig:Register("X5_AutoFish", x5AutoFishToggle)
 
 -- Animation disable
 local x5StopAnimConnections = {}
